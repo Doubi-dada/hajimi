@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <div style="text-align: center; margin-top: 20px;">
+        <img src="https://img.picui.cn/free/2025/05/20/682c35f4d56b4.gif" alt="哈吉米"
+            style="max-width: 90%; width: 300px; height: auto; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+    </div>
+
+    <title>哈吉米命名工具</title>
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            padding: 40px;
+            max-width: 600px;
+            margin: auto;
+            background: #f9f9f9;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 30px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        button {
+            margin-top: 12px;
+            width: 100%;
+            background-color: #007aff;
+            color: white;
+            font-size: 16px;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .result {
+            margin-top: 30px;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        .highlight {
+            color: #007aff;
+            font-weight: bold;
+        }
+
+        .history {
+            margin-top: 40px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .history-title {
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .history-item {
+            margin: 4px 0;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>哈吉米命名工具</h1>
+
+    <input type="text" id="nameInput" placeholder="请输入哈吉米的名字">
+    <button onclick="generateName()">查询</button>
+
+    <div class="result" id="resultBox"></div>
+
+    <div class="actions" id="extraButtons" style="display:none;">
+        <button onclick="copyName()">复制结果</button>
+        <button onclick="switchName()">换一个</button>
+    </div>
+
+    <div class="history" id="historyBox">
+        <div class="history-title">历史记录：</div>
+        <div id="historyList"></div>
+    </div>
+
+    <script>
+        let currentInput = '';
+        let currentIndex = -1;
+
+        const specialCases = ['狗子', '猫咪', '猫猫', '狗狗', '小狗', '小猫', '大狗', '大猫'];
+
+        function generateName() {
+            const input = document.getElementById('nameInput').value.trim();
+            currentInput = input;
+            currentIndex = -1; // 初始化为 -1 表示从最后一个字开始
+            const name = getNameFromInput(input, currentIndex);
+            if (name) {
+                showResult(name);
+                saveHistory(name);
+            } else {
+                document.getElementById('resultBox').innerHTML = '无法识别内容';
+                document.getElementById('extraButtons').style.display = 'none';
+            }
+        }
+
+        function switchName() {
+            if (!currentInput) return;
+            const clean = getCleanInput(currentInput);
+            if (!clean) return;
+
+            currentIndex--;
+            if (Math.abs(currentIndex) > clean.length) {
+                currentIndex = -1;
+            }
+
+            const name = getNameFromInput(currentInput, currentIndex);
+            if (name) {
+                showResult(name);
+                saveHistory(name);
+            }
+        }
+
+        function getCleanInput(input) {
+            return input.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '');
+        }
+
+        function getNameFromInput(input, index = -1) {
+            if (!input) return '';
+            for (let keyword of specialCases) {
+                if (input.includes(keyword)) {
+                    let core = keyword.replace(/^(小|大)/, '').replace(/(子|咪)+$/, '');
+                    if (!core) core = keyword.charAt(keyword.length - 1);
+                    return '哈吉' + core;
+                }
+            }
+            const clean = getCleanInput(input);
+            if (!clean) return '';
+            let i = clean.length + index;
+            if (i < 0) i = clean.length - 1;
+            const core = clean.charAt(i);
+            return '哈吉' + core;
+        }
+
+        function showResult(name) {
+            document.getElementById('resultBox').innerHTML = `命名结果：<span class="highlight">${name}</span>`;
+            document.getElementById('extraButtons').style.display = 'flex';
+        }
+
+        function copyName() {
+            const resultText = document.querySelector('#resultBox .highlight')?.textContent;
+            if (!resultText) return alert('没有可复制的内容');
+            navigator.clipboard.writeText(resultText).then(() => {
+                alert('复制成功：' + resultText);
+            }).catch(() => {
+                alert('复制失败');
+            });
+        }
+
+        function saveHistory(name) {
+            let history = JSON.parse(localStorage.getItem('hajime_history') || '[]');
+            if (!history.includes(name)) {
+                history.unshift(name);
+                if (history.length > 10) history.pop();
+                localStorage.setItem('hajime_history', JSON.stringify(history));
+                renderHistory();
+            }
+        }
+
+        function renderHistory() {
+            const history = JSON.parse(localStorage.getItem('hajime_history') || '[]');
+            const list = document.getElementById('historyList');
+            list.innerHTML = history.map(item => `<div class="history-item">${item}</div>`).join('');
+        }
+
+        // 初始化
+        renderHistory();
+    </script>
+
+
+</body>
+
+</html>
